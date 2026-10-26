@@ -1,0 +1,2 @@
+# Optional: browser-backed Greenhouse/Lever apply (Apply agent → Browser submit)
+playwright>=1.40.0

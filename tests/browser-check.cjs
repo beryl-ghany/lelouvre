@@ -1,0 +1,83 @@
+// Run only against a dedicated test database: this creates QA application records.
+const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+
+(async () => {
+  const browser = await chromium.launch({headless:true, executablePath:process.env.BROWSER_EXE || 'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+  try {
+    const page = await browser.newPage({viewport:{width:1280,height:900}});
+    const errors=[];
+    page.on('pageerror', error=>errors.push(error.message));
+    const suffix=Date.now();
+    const organization='QA Employer '+suffix, sponsor='QA Foundation '+suffix;
+    await page.goto('http://127.0.0.1:8766');
+    await page.getByRole('heading',{name:'Your next chapter.',exact:true}).waitFor();
+    await page.locator('nav a[href="#log"]').click();
+    await page.getByLabel('Company *',{exact:true}).fill(organization);
+    await page.getByLabel('Role *',{exact:true}).fill('SWE Intern');
+    await page.getByLabel('Internship cycle (optional)',{exact:true}).fill('Summer 2027');
+    await page.getByRole('button',{name:'Save to my tracker'}).click();
+    await page.getByRole('heading',{name:organization,exact:true}).waitFor();
+    const internshipHash=new URL(page.url()).hash;
+    await page.locator('#update-form select[name="stage"]').selectOption('Interview');
+    await page.getByLabel('Reason / source of update *',{exact:true}).fill('QA interview invitation');
+    await page.getByRole('button',{name:'Save update'}).click();
+    await page.getByText('Progress updated. Previous values are preserved in history.').waitFor();
+    await page.getByLabel('Add a note',{exact:true}).fill('<img src=x onerror=alert(1)> QA note');
+    await page.getByRole('button',{name:'Add note',exact:true}).click();
+    await page.getByText('Note added.',{exact:true}).waitFor();
+    await page.getByLabel('Task title *',{exact:true}).fill('QA interview preparation '+suffix);
+    await page.getByRole('button',{name:'Add task',exact:true}).click();
+    await page.getByText('Task saved.',{exact:true}).waitFor();
+    await page.reload();
+    await page.getByText('QA interview invitation',{exact:false}).waitFor();
+    assert.equal(await page.locator('.timeline img').count(),0);
+    await page.locator('nav a[href="#log"]').click();
+    await page.getByLabel('Company *',{exact:true}).fill(organization);
+    await page.getByLabel('Role *',{exact:true}).fill('SWE Intern');
+    await page.getByLabel('Internship cycle (optional)',{exact:true}).fill('Summer 2027');
+    await page.getByRole('button',{name:'Save to my tracker'}).click();
+    await page.getByRole('heading',{name:'Possible duplicate',exact:true}).waitFor();
+    await page.locator('#application-type').selectOption('scholarship');
+    await page.getByLabel('Sponsor *',{exact:true}).fill(sponsor);
+    await page.getByLabel('Scholarship name *',{exact:true}).fill('CS Award');
+    await page.getByLabel('Award cycle / academic year (optional)',{exact:true}).fill('2027–28');
+    await page.getByRole('button',{name:'Save to my tracker'}).click();
+    await page.getByRole('heading',{name:sponsor,exact:true}).waitFor();
+    await page.getByRole('button',{name:'Scholarships',exact:true}).click();
+    await page.locator('nav a[href="#applications"]').click();
+    await page.getByRole('heading',{name:'My applications',exact:true}).waitFor();
+    assert.equal(await page.getByRole('heading',{name:organization,exact:true}).count(),0);
+    assert.equal(await page.getByRole('heading',{name:sponsor,exact:true}).count(),1);
+    await page.getByRole('button',{name:'All',exact:true}).click();
+    await page.getByRole('heading',{name:organization,exact:true}).waitFor();
+    await page.screenshot({path:path.resolve('.tmp/tracker-desktop.png'),fullPage:true});
+    await page.setViewportSize({width:320,height:900});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    await page.locator('nav a[href="#home"]').click();
+    await page.getByRole('heading',{name:'Your next chapter.',exact:true}).waitFor();
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    const task=page.locator('article.task').filter({hasText:'QA interview preparation '+suffix});
+    await task.getByRole('button',{name:'Mark done',exact:true}).click();
+    await page.getByText('Task marked complete.',{exact:true}).waitFor();
+    // Simulate two windows updating the same revision.
+    await page.goto('http://127.0.0.1:8766/'+internshipHash);
+    await page.getByRole('heading',{name:organization,exact:true}).waitFor();
+    const second=await browser.newPage();
+    await second.goto(page.url());
+    await second.getByRole('heading',{name:organization,exact:true}).waitFor();
+    await page.locator('#update-form select[name="stage"]').selectOption('Offer');
+    await page.getByLabel('Reason / source of update *',{exact:true}).fill('QA first window');
+    await page.getByRole('button',{name:'Save update'}).click();
+    await page.getByText('Progress updated. Previous values are preserved in history.').waitFor();
+    await second.locator('#update-form select[name="stage"]').selectOption('Rejected');
+    await second.getByLabel('Reason / source of update *',{exact:true}).fill('QA stale window');
+    await second.getByRole('button',{name:'Save update'}).click();
+    await second.getByText('This record changed in another window.',{exact:false}).waitFor();
+    assert.deepEqual(errors,[]);
+    console.log('Browser checks passed: manual saves, reload persistence, status history, notes, tasks, duplicate rejection, scope filters, narrow layout, and stale-window protection.');
+  } finally {
+    await browser.close();
+  }
+})().catch(error=>{console.error(error);process.exitCode=1;});

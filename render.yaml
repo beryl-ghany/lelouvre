@@ -1,0 +1,22 @@
+# Read-only demo deploy (no Ollama on Render — tailoring uses offline/rules fallbacks).
+services:
+  - type: web
+    name: lelouvre-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install --upgrade pip
+    startCommand: python -m lelouvre.server
+    healthCheckPath: /api/state
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: LELOUVRE_DEMO
+        value: "1"
+      - key: LELOUVRE_HOSTED
+        value: "1"
+      - key: LELOUVRE_TAILOR_OFFLINE
+        value: "1"
+      - key: LELOUVRE_ACCESS_TOKEN
+        generateValue: true
+      - key: PORT
+        value: "8765"

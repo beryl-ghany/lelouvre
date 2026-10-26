@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="lelouvre-token" content="__TOKEN__">
+  <title>Lelouvre</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#today">Lelouvre</a>
+      <p class="sidebar-tagline muted">Your application workspace</p>
+      <nav class="sidebar-nav">
+        <a href="#today" data-nav="today">Today</a>
+        <a href="#discover" data-nav="discover">Discover</a>
+        <a href="#profile" data-nav="profile">My Profile</a>
+        <a href="#applications" data-nav="applications">Applications</a>
+        <a href="#activity" data-nav="activity">Settings &amp; Activity</a>
+      </nav>
+      <div class="sidebar-foot">
+        <div role="group" aria-label="Opportunity scope" id="scope">
+          <button type="button" data-scope="all">All</button>
+          <button type="button" data-scope="internship">Internships</button>
+          <button type="button" data-scope="scholarship">Scholarships</button>
+        </div>
+        <p class="small muted local-note">Local workspace</p>
+      </div>
+    </aside>
+    <div class="workspace">
+      <div class="service-status" id="service-status">Opening…</div>
+      <div id="feedback" role="status" aria-live="polite"></div>
+      <main id="main" tabindex="-1"><p class="muted">Loading…</p></main>
+      <footer>Stored in your local Lelouvre database.</footer>
+    </div>
+  </div>
+</body>
+</html>
