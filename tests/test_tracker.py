@@ -1,3 +1,4 @@
+from tests.support import seed_candidate
 import concurrent.futures
 import csv
 import io
@@ -109,6 +110,7 @@ class HTTPTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory(dir=TEST_ROOT)
         self.server = make_server(Path(self.directory.name) / "http.sqlite3")
+        seed_candidate(self.server.application_agent)
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
         self.base = f"http://127.0.0.1:{self.server.server_port}"

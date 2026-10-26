@@ -5,7 +5,12 @@ from pathlib import Path
 from .demo import demo_profile, is_demo
 from .store import Problem
 
-DEFAULT_PROFILE = dict.fromkeys(("name", "first_name", "last_name", "school", "graduation", "gpa", "email", "phone", "resume_path", "work_authorized", "requires_sponsorship"), "")
+# Real candidate data is entered locally and stored only in the ignored database.
+DEFAULT_PROFILE = dict.fromkeys((
+    "name", "first_name", "last_name", "school", "graduation", "gpa",
+    "email", "phone", "resume_path", "work_authorized", "requires_sponsorship",
+), "")
+
 
 
 class ProfileStore:

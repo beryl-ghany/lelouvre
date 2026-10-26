@@ -1,3 +1,4 @@
+from lelouvre.demo import DEMO_ENTRIES
 import json
 import tempfile
 import unittest
@@ -20,11 +21,13 @@ class V05Tests(unittest.TestCase):
         self.store = Store(Path(self.directory.name) / "v05.sqlite3")
         ScoutStore(self.store)
         self.bank = EvidenceBank(self.store)
+        for entry in DEMO_ENTRIES:
+            self.bank.upsert_entry(entry)
 
     def tearDown(self):
         self.directory.cleanup()
 
-    def test_evidence_bank_seeds_entries(self):
+    def test_explicit_fictional_evidence_persists(self):
         snap = self.bank.snapshot()
         self.assertGreaterEqual(len(snap["entries"]), 3)
         self.assertTrue(snap["master_resume"].get("bullets"))

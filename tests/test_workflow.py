@@ -1,4 +1,5 @@
 """Regression checks for approval, reviewed answers, and durable submission claims."""
+from tests.support import seed_candidate
 import json
 import os
 import tempfile
@@ -20,6 +21,7 @@ class WorkflowTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory(dir=ROOT)
         self.store = Store(Path(self.directory.name) / 'regression.sqlite3')
         self.agent = ApplicationAgent(self.store)
+        seed_candidate(self.agent)
         self.offline = patch.dict(os.environ, {'LELOUVRE_TAILOR_OFFLINE': '1'})
         self.offline.start()
 

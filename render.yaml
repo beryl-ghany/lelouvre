@@ -6,10 +6,10 @@ services:
     plan: free
     buildCommand: pip install --upgrade pip
     startCommand: python -m lelouvre.server
-    healthCheckPath: /api/state
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
-        value: "3.12"
+        value: "3.12.12"
       - key: LELOUVRE_DEMO
         value: "1"
       - key: LELOUVRE_HOSTED

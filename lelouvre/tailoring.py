@@ -69,7 +69,7 @@ def tailor_documents(bank_snapshot, *, organization, title, location, descriptio
     resume = {
         "variant": variant,
         "version": (master.get("version") or 0) + 1,
-        "name": master.get("name", "Jordan Demo"),
+        "name": master.get("name", ""),
         "headline": master.get("headline", ""),
         "organization_target": organization,
         "role_target": title,

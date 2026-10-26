@@ -161,7 +161,9 @@ def fill_plan(fields, profile=None):
             break
         name = field["name"].casefold()
         if "first" in name:
-            filled[field["name"]] = profile["name"].split()[0]
+            parts = profile.get("name", "").split()
+            if parts:
+                filled[field["name"]] = parts[0]
         elif "last" in name:
             parts = profile["name"].split()
             filled[field["name"]] = parts[-1] if len(parts) > 1 else "Demo"
@@ -195,7 +197,7 @@ def run_fixture_form(*, fixture_name="sample_form.html", use_playwright=False, t
     html = path.read_text(encoding="utf-8")
     fields = read_form_fields(html)
     labeled, gemma_meta = label_fields_with_model(fields, use_gemma=True, trace_log=trace_log)
-    result = fill_plan(labeled)
+    result = fill_plan(labeled, profile=demo_profile())
     result["fields"] = labeled
     if gemma_meta:
         result["gemma_meta"] = gemma_meta

@@ -147,7 +147,7 @@ Rejected and withdrawn stop automatic submission attempts. Offer is not accepted
 
 ## Permission matrix
 
-Candidate work authorization and sponsorship answers must be supplied locally and reviewed for the exact question.
+Candidate authorization and sponsorship answers must be supplied locally and reviewed for the exact employer question. Do not infer them from student status.
 
 Approved answer update: Yes for the combined now-or-in-the-future sponsorship question, as supplied by the user. Current authorization and internship-only sponsorship questions remain unresolved. Match question meaning and context, not merely the presence of the word sponsorship; the unconfirmed-authorization blocker below concerns those remaining questions.
 

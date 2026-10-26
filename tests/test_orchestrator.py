@@ -1,3 +1,4 @@
+from tests.support import seed_candidate
 import json
 import tempfile
 import threading
@@ -52,6 +53,7 @@ class OrchestratorTests(unittest.TestCase):
         self.apply_url = f"http://127.0.0.1:{self.server.server_port}/apply"
         ScoutStore(self.store)
         self.agent = ApplicationAgent(self.store, execution_hosts={"127.0.0.1", "localhost"}, llm=FakeLLM())
+        seed_candidate(self.agent)
         self.agent.inspect = lambda destination: {
             "action": self.apply_url,
             "method": "post",

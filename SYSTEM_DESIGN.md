@@ -6,7 +6,7 @@ Status: October 19, 2026. The local tracker and first read-only scouting loop ar
 
 Lelouvre also supports scholarships as a parallel opportunity track. See SCHOLARSHIPS.md for scholarship eligibility, award-cycle handling, manual imports, submission rules, and award/renewal tracking. Internship season and location restrictions do not automatically apply to scholarships.
 
-Find and evaluate Summer 2027 internships for Jordan Demo, alert on verified openings, prepare truthful applications, submit routine applications within an approved answer policy, and maintain an auditable application history.
+Find and evaluate Summer 2027 internships for a student, alert on verified openings, prepare truthful applications, submit routine applications within an approved answer policy, and maintain an auditable application history.
 
 ## Candidate profile and search policy
 

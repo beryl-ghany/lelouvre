@@ -26,7 +26,7 @@ from .demo import demo_profile, is_demo
 from .preparation import PreparationService
 from .store import Problem, now
 from .local_llm import OllamaProvider
-from .profile_store import ProfileStore
+from .profile_store import ProfileStore, DEFAULT_PROFILE
 from .forms import FormParser, AUTH_PATTERN, CONFIRMATION
 
 
@@ -34,7 +34,7 @@ def active_profile():
     return demo_profile() if is_demo() else APPROVED_PROFILE
 
 
-APPROVED_PROFILE = {}
+APPROVED_PROFILE = dict(DEFAULT_PROFILE)
 
 ROUTINE_FIELDS = {
     "first_name": "first_name", "last_name": "last_name", "email": "email", "phone": "phone",

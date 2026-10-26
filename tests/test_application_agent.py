@@ -1,3 +1,4 @@
+from tests.support import seed_candidate
 import json
 import tempfile
 import threading
@@ -31,6 +32,7 @@ class ApplicationAgentTests(unittest.TestCase):
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True); self.thread.start()
         self.url = f"http://127.0.0.1:{self.server.server_port}/apply"
         self.agent = ApplicationAgent(self.store)
+        seed_candidate(self.agent)
     def tearDown(self):
         self.server.shutdown(); self.server.server_close(); self.thread.join(); self.directory.cleanup()
     def test_complete_controlled_submission_captures_receipt_and_logs(self):

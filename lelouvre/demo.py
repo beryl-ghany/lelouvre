@@ -18,6 +18,7 @@ def demo_database_path():
 def demo_profile():
     return {
         "name": "Jordan Demo",
+        "first_name": "Jordan", "last_name": "Demo", "phone": "", "resume_path": "",
         "school": "Demo State University",
         "graduation": "May 2028",
         "gpa": "3.65",
@@ -30,6 +31,7 @@ def demo_profile():
 def demo_api_profile():
     return {
         "name": "Jordan Demo",
+        "first_name": "Jordan", "last_name": "Demo", "phone": "", "resume_path": "",
         "school": "Demo State University",
         "graduation": "May 2028",
         "authorization_answer": "Demo — not real immigration data",

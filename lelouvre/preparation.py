@@ -77,6 +77,8 @@ class PreparationService:
                 for b in accepted
             ]
         failures = verify_documents(snapshot, tailored)
+        if not snapshot["entries"]:
+            failures.append({"check": "evidence", "message": "Add your own evidence entries before approving application materials."})
         for item in rejected:
             failures.append({"check": "claim", "message": item["reason"], "bullet": item["bullet"]})
         return {

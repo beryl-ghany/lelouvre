@@ -241,3 +241,34 @@ For a simple backup, stop the service and copy the database to a protected locat
 ## License
 
 Apache License 2.0. See [LICENSE](LICENSE).
+
+## Hosted preview on Render
+
+The hosted version is a **read-only preview with fictional data**. It cannot edit
+profiles, run agents, prepare packets, call chat, or submit applications. All POST
+requests are rejected server-side, including requests with the access token.
+Local Gemma inference is demonstrated in the desktop version; Render does not run
+Ollama in this configuration.
+
+1. In Render, choose **New → Blueprint** and connect this GitHub repository.
+2. Select `main` and deploy the root `render.yaml`.
+3. The unauthenticated health endpoint is `/health`.
+4. Read `LELOUVRE_ACCESS_TOKEN` from the service's environment settings. Open the
+   service URL with `?access_token=YOUR_TOKEN`. Keep this access link private.
+5. Use the generated demo database only. Free-service storage is temporary.
+
+The deployment requires `LELOUVRE_DEMO=1` and `LELOUVRE_HOSTED=1`. Hosted mode
+rejects real-workspace mode. Real candidate information belongs in your ignored
+local database, never source defaults, committed files, or the hosted preview.
+
+### Privacy maintenance
+
+Public defaults contain no real candidate identity, GPA, or immigration answers.
+Fresh real workspaces start with empty profiles and evidence banks. Existing
+local databases are not overwritten by these changes. Never upload the `data/`
+folder, local resume files, environment files, database backups or private traces.
+
+The initial public commits were rewritten to remove candidate details and personal
+commit email addresses. Original commit dates were retained; privacy and deployment
+fixes are recorded in a separate commit. Previously downloaded copies or cached
+GitHub views are outside this repository's control.

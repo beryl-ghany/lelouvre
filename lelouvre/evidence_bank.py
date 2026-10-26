@@ -5,9 +5,11 @@ import json
 import re
 from uuid import uuid4
 
-from .demo import DEMO_ENTRIES, DEMO_SCREENING, is_demo
+from .demo import DEMO_ENTRIES, DEMO_SCREENING, is_demo, demo_profile
 from .store import Problem, now
 
+# A fresh real workspace has no candidate claims or approved screening answers.
+# Fictional sample evidence is seeded only when demo mode is explicitly enabled.
 DEFAULT_ENTRIES = []
 DEFAULT_SCREENING = []
 
@@ -132,9 +134,14 @@ class EvidenceBank:
                         "section": entry["kind"],
                     }
                 )
+        # Demo identity never inherits the developer's personal resume header.
+        # For real workspaces, retain a locally stored header when rebuilding.
+        row = connection.execute("SELECT master_resume_json FROM evidence_meta WHERE id=1").fetchone()
+        previous = json.loads(row[0] or "{}") if row else {}
+        profile = demo_profile() if is_demo() else previous
         return {
-            "name": "Jordan Demo",
-            "headline": "Computer Science · Cybersecurity · Expected May 2028",
+            "name": profile.get("name", ""),
+            "headline": "Fictional demonstration profile" if is_demo() else previous.get("headline", ""),
             "bullets": sections,
             "variant": "master",
             "version": 1,
@@ -200,7 +207,7 @@ class EvidenceBank:
                     """INSERT INTO evidence_entries
                        (id,kind,title,organization,tools,summary,results,links,variant_tags,created_at,updated_at)
                        VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-                    (eid, *payload, timestamp, timestamp),
+                    (eid, *payload, timestamp),
                 )
             connection.execute(
                 "UPDATE evidence_meta SET master_resume_json=?, updated_at=? WHERE id=1",

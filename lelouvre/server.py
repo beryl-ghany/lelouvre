@@ -53,6 +53,9 @@ def csv_cell(value):
 
 
 def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access_token=None):
+    read_only = bool(hosted and is_demo())
+    if hosted and not is_demo():
+        raise ValueError("Hosted mode is restricted to a fictional demo. Keep real candidate data local.")
     store = Store(database)
     trace_log = TraceLog(store)
     agent = ScoutAgent(store, trace_log=trace_log)
@@ -90,8 +93,10 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
 
         def guard(self, mutation=False):
             parsed = urlsplit(self.path)
-            if parsed.path == "/health":
+            if parsed.path == "/health" and not mutation:
                 return
+            if read_only and mutation:
+                raise Problem("This hosted preview is read-only. Run Lelouvre locally to prepare or submit applications.", 403, "read_only_demo")
             if self.server.hosted:
                 host = self.headers.get("Host", "")
                 if not host:
@@ -164,7 +169,8 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
                 return self.send(200, {"name": "Lelouvre", "version": "0.5.2", "stages": STAGES,
                     "capabilities": {"manual_tracker": True, "live_scouting": True, "local_open_source_llm": True,
                         "llm_model": application_agent.llm.model,
-                        "gemma": gemma_client.status(), "application_packets": True,
+                        "gemma": ({"available": False, "model_ready": False, "model": gemma_client.model, "base_url": "Local inference is available in the desktop version"} if read_only else gemma_client.status()), "application_packets": True,
+                        "read_only": read_only,
                         "evidence_bank": True, "tailored_documents": True, "apply_orchestrator": True,
                         "demo_mode": is_demo(),
                         "browser_apply": apply_orchestrator.status()["browser_available"],
@@ -179,7 +185,7 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
                     return self.send(200, application_agent.archive(parts[2]))
                 return self.send(200, store.application(parts[-1]))
             if path == "/api/gemma":
-                return self.send(200, gemma_client.status())
+                return self.send(200, {"available": False, "model_ready": False, "model": gemma_client.model} if read_only else gemma_client.status())
             if path == "/api/evidence":
                 return self.send(200, evidence_bank.snapshot())
             if path == "/api/tasks":
@@ -193,11 +199,15 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
                 limit = int(query.get("limit", ["40"])[0])
                 return self.send(200, trace_log.list(limit=min(limit, 100), kind=kind or None))
             if path == "/api/today":
-                enrich_new_discovery_fits(store, limit=3, trace_log=trace_log)
+                if not read_only:
+                    enrich_new_discovery_fits(store, limit=3, trace_log=trace_log)
                 runs = application_agent.list()
                 handoffs = handoff_queue.list_recent()
                 view = build_today(store, runs, handoffs)
                 scout = agent.repository.status()
+                if read_only:
+                    view["overnight_digest"] = {"summary": "Fictional preview only. Discovery, AI inference and application changes are disabled on this hosted demo.", "source": "rules"}
+                    return self.send(200, view)
                 view["overnight_digest"] = build_overnight_digest(
                     store,
                     new_roles=view["new_roles"],
@@ -323,6 +333,7 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
     server.application_agent = application_agent
     server.apply_orchestrator = apply_orchestrator
     server.internship_agent = internship_agent
+    server.read_only = read_only
     server.hosted = hosted
     server.daemon_threads = True
     return server
@@ -343,8 +354,9 @@ def main():
     database = args.database if args.database is not None else db_env
     database.parent.mkdir(parents=True, exist_ok=True)
     server = make_server(database, port, bind_host=bind, hosted=hosted, access_token=token if hosted else None)
-    server.agent.start_scheduler()
-    server.internship_agent.start_scheduler()
+    if not server.read_only:
+        server.agent.start_scheduler()
+        server.internship_agent.start_scheduler()
     label = "hosted" if hosted else "local"
     print(f"Lelouvre ({label}): port {server.server_port}", flush=True)
     print(f"Database: {database.resolve()}", flush=True)

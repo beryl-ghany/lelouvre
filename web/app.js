@@ -338,7 +338,7 @@
       const bar = document.getElementById('service-status');
       if (bar && state.config?.capabilities) {
         const c = state.config.capabilities;
-        bar.innerHTML = `Lelouvre ${esc(state.config.version)}`;
+        bar.innerHTML = `Lelouvre ${esc(state.config.version)}${state.config.capabilities.read_only ? " · Read-only hosted demo · Fictional data · AI inference disabled" : ""}`;
       }
 
       const views = {
@@ -347,6 +347,11 @@
         interview: interviewView, activity: activityView,
       };
       (views[page] || todayView)();
+      if (state.config?.capabilities?.read_only) {
+        main.querySelectorAll('button,input,select,textarea').forEach(el => { if (el.dataset.action !== 'reload') el.disabled = true; });
+        document.querySelector('.local-note').textContent = 'Read-only hosted preview';
+        document.querySelector('footer').textContent = 'Fictional demo data. Changes are disabled. Demo storage is temporary.';
+      }
     } catch (error) {
       if (version !== loadVersion) return;
       notify(error.message, true);
