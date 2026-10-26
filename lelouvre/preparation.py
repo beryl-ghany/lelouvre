@@ -44,7 +44,8 @@ class PreparationService:
                 prompt = (
                     "Write 4 to 6 resume bullets tailored to the job posting. "
                     "Use ONLY facts from the evidence entries. Each bullet MUST include source_id "
-                    "matching an evidence entry id. Do not invent tools, metrics, or employers.\n\n"
+                    "matching an evidence entry id. Put the ID only in source_id, never in text. "
+                    "Preserve the evidence wording. Do not invent tools, metrics, or employers.\n\n"
                     f"Posting:\n{json.dumps(posting, ensure_ascii=False)}\n\n"
                     f"Evidence:\n{json.dumps(compact_evidence, ensure_ascii=False)}"
                 )
@@ -54,7 +55,7 @@ class PreparationService:
                         {"role": "user", "content": prompt},
                     ],
                     TAILOR_SCHEMA,
-                    timeout=8,
+                    timeout=120,
                     with_meta=True,
                 )
                 raw_bullets = validate_tailor_payload(raw)
@@ -71,7 +72,7 @@ class PreparationService:
             description=description,
             evaluation=evaluation,
         )
-        if accepted:
+        if accepted or source == "gemma_tailor":
             tailored["resume"]["bullets"] = [
                 {"id": b.get("source_id"), "text": b["text"], "evidence_id": b["source_id"], "source_entry_title": ""}
                 for b in accepted

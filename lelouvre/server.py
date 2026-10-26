@@ -8,6 +8,7 @@ import json
 import logging
 import os
 import secrets
+import tempfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -56,6 +57,11 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
     read_only = bool(hosted and is_demo())
     if hosted and not is_demo():
         raise ValueError("Hosted mode is restricted to a fictional demo. Keep real candidate data local.")
+    # Public previews must never read a persisted candidate database.
+    public_demo = hosted and is_demo()
+    demo_directory = tempfile.TemporaryDirectory(prefix="lelouvre-preview-") if public_demo else None
+    if demo_directory:
+        database = Path(demo_directory.name) / "fictional.sqlite3"
     store = Store(database)
     trace_log = TraceLog(store)
     agent = ScoutAgent(store, trace_log=trace_log)
@@ -106,6 +112,10 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
                     allowed = {f"https://{host}", f"http://{host}"}
                     if origin.rstrip("/") not in allowed:
                         raise Problem("Cross-origin requests are not allowed.", 403, "forbidden")
+                if public_demo:
+                    if mutation:
+                        raise Problem("This is a read-only fictional preview. Run Lelouvre locally for Gemma and application preparation.", 403, "preview_read_only")
+                    return
                 needs_token = mutation or parsed.path.startswith("/api/")
                 if needs_token and not secrets.compare_digest(self.headers.get("X-Lelouvre-Token", ""), token):
                     raise Problem("Access token required. Open Lelouvre with your saved access link.", 403, "forbidden")
@@ -172,7 +182,7 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
                         "gemma": ({"available": False, "model_ready": False, "model": gemma_client.model, "base_url": "Local inference is available in the desktop version"} if read_only else gemma_client.status()), "application_packets": True,
                         "read_only": read_only,
                         "evidence_bank": True, "tailored_documents": True, "apply_orchestrator": True,
-                        "demo_mode": is_demo(),
+                        "demo_mode": is_demo(), "read_only_preview": public_demo,
                         "browser_apply": apply_orchestrator.status()["browser_available"],
                         "controlled_submissions": True, "email": False, "live_submissions_enabled": bool(live_hosts),
                         "live_execution_hosts": sorted(live_hosts), "internship_agent": True},
@@ -335,6 +345,7 @@ def make_server(database, port=0, *, bind_host="127.0.0.1", hosted=False, access
     server.internship_agent = internship_agent
     server.read_only = read_only
     server.hosted = hosted
+    server.demo_directory = demo_directory
     server.daemon_threads = True
     return server
 

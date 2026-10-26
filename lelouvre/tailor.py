@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from .gemma import GemmaClient
 from .store import Problem
@@ -45,6 +46,9 @@ def validate_tailor_payload(data):
             raise Problem("Each bullet needs non-empty text.", 502, "tailor_invalid")
         if not isinstance(source_id, str) or not source_id.strip():
             raise Problem("Each bullet needs source_id.", 502, "tailor_invalid")
+        # Some models repeat their citation in prose. Remove only the exact
+        # trailing metadata citation; keep all factual text for claim checking.
+        item["text"] = re.sub(r"\s*\(source_id:\s*" + re.escape(source_id) + r"\)\s*$", "", text).strip()
     return bullets
 
 
@@ -64,7 +68,8 @@ def tailor_bullets(posting, evidence_entries, *, llm=None, client=None):
     prompt = (
         "Write 4 to 6 resume bullets tailored to the job posting. "
         "Use ONLY facts from the evidence entries. Each bullet MUST include source_id "
-        "matching an evidence entry id. Do not invent tools, metrics, or employers.\n\n"
+        "matching an evidence entry id. Put the ID only in source_id, never in text. "
+        "Preserve the evidence wording. Do not invent tools, metrics, or employers.\n\n"
         f"Posting:\n{json.dumps(posting, ensure_ascii=False)}\n\n"
         f"Evidence:\n{json.dumps(compact_evidence, ensure_ascii=False)}"
     )
@@ -75,7 +80,7 @@ def tailor_bullets(posting, evidence_entries, *, llm=None, client=None):
                 {"role": "user", "content": prompt},
             ],
             TAILOR_SCHEMA,
-            timeout=8,
+            timeout=120,
         )
     except Problem:
         raise

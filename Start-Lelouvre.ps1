@@ -2,11 +2,12 @@ param([switch]$NoBrowser)
 $ErrorActionPreference = 'Stop'
 $workspace = $PSScriptRoot
 $address = 'http://127.0.0.1:8765'
+$expectedModel = if ($env:LELOUVRE_GEMMA_MODEL) { $env:LELOUVRE_GEMMA_MODEL } elseif ($env:LELOUVRE_OLLAMA_MODEL) { $env:LELOUVRE_OLLAMA_MODEL } else { 'gemma4:e2b' }
 
 function Test-Lelouvre {
     try {
         $response = Invoke-RestMethod -Uri "$address/api/state" -TimeoutSec 2
-        return ($response.name -eq 'Lelouvre') -and ($response.version -eq '0.5.1') -and ($response.capabilities.internship_agent -eq $true)
+        return ($response.name -eq 'Lelouvre') -and ($response.version -eq '0.5.2') -and ($response.capabilities.internship_agent -eq $true) -and ($response.capabilities.demo_mode -eq ($env:LELOUVRE_DEMO -eq '1')) -and ($response.capabilities.gemma.model -eq $expectedModel)
     } catch { return $false }
 }
 

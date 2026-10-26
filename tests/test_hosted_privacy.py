@@ -75,9 +75,9 @@ class HostedReadOnlyTests(unittest.TestCase):
         except urllib.error.HTTPError as error:
             return error.code, error.read()
 
-    def test_health_is_public_but_api_needs_token(self):
+    def test_fictional_preview_api_is_public(self):
         self.assertEqual(self.request('/health', token=False)[0], 200)
-        self.assertEqual(self.request('/api/state', token=False)[0], 403)
+        self.assertEqual(self.request('/api/state', token=False)[0], 200)
         status, body = self.request('/api/state')
         self.assertEqual(status, 200)
         config = json.loads(body)

@@ -38,7 +38,7 @@ def check_bullet(bullet, entries_by_id):
     for match in WORD.finditer(text):
         token = match.group(0)
         low = token.casefold()
-        if low in {"and", "the", "for", "with", "using", "built", "demo", "campus", "api"}:
+        if low in {"and", "the", "for", "with", "using", "built", "developed", "demo", "campus", "api"}:
             continue
         if low not in corpus and not any(low in tool.casefold() for tool in entries_by_id[source_id].get("tools") or []):
             if len(token) >= 4 and token[0].isupper():

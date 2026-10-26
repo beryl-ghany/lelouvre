@@ -317,6 +317,7 @@
     navUI(page);
     try {
       if (!state.config) state.config = await api('/api/state');
+      if (state.config.capabilities.read_only_preview) notify('Read-only preview · Fictional data · Run locally for Gemma and application preparation.');
       const extra = [];
       if (['today', 'activity', 'prepare'].includes(page) || page === 'discover') extra.push('apply');
       if (page === 'today') extra.push('today');

@@ -99,8 +99,8 @@ python -m venv .venv
 Install and open [Ollama](https://ollama.com), then run:
 
 ```powershell
-ollama pull gemma3:4b
-$env:LELOUVRE_GEMMA_MODEL = "gemma3:4b"
+ollama pull gemma4:e2b
+$env:LELOUVRE_GEMMA_MODEL = "gemma4:e2b"
 $env:LELOUVRE_GEMMA_URL = "http://127.0.0.1:11434"
 ```
 
@@ -146,7 +146,7 @@ To run a separate demo server:
 ```powershell
 $env:LELOUVRE_DEMO = "1"
 $env:LELOUVRE_DATABASE = Join-Path $PWD 'data\lelouvre-demo.sqlite3'
-$env:LELOUVRE_GEMMA_MODEL = "gemma3:4b"
+$env:LELOUVRE_GEMMA_MODEL = "gemma4:e2b"
 Remove-Item Env:LELOUVRE_TAILOR_OFFLINE -ErrorAction SilentlyContinue
 
 .\.venv\Scripts\python.exe -m lelouvre.server --port 8766
@@ -254,7 +254,7 @@ Ollama in this configuration.
 2. Select `main` and deploy the root `render.yaml`.
 3. The unauthenticated health endpoint is `/health`.
 4. Read `LELOUVRE_ACCESS_TOKEN` from the service's environment settings. Open the
-   service URL with `?access_token=YOUR_TOKEN`. Keep this access link private.
+   service URL. The fictional read-only preview does not require an access token; keep the generated token private.
 5. Use the generated demo database only. Free-service storage is temporary.
 
 The deployment requires `LELOUVRE_DEMO=1` and `LELOUVRE_HOSTED=1`. Hosted mode
@@ -272,3 +272,5 @@ The initial public commits were rewritten to remove candidate details and person
 commit email addresses. Original commit dates were retained; privacy and deployment
 fixes are recorded in a separate commit. Previously downloaded copies or cached
 GitHub views are outside this repository's control.
+
+The hosted fictional preview is public and read-only, uses a fresh isolated database, and never opens a persisted candidate database. Run locally for Gemma inference.

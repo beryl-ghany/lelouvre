@@ -57,6 +57,20 @@ class DemoPackTests(unittest.TestCase):
         self.assertIn("first_name", result["filled"])
         self.assertNotIn("sponsorship", result["filled"])
 
+    def test_citation_metadata_is_not_a_claim_but_inflation_still_is(self):
+        entry = DEMO_ENTRIES[0]
+        citation = f" (source_id: {entry['id']})"
+        bullets = [{"text": entry["results"][0] + citation, "source_id": entry["id"]} for _ in range(4)]
+        validated = validate_tailor_payload({"bullets": bullets})
+        self.assertIsNone(check_bullet(validated[0], {entry["id"]: entry}))
+        validated[0]["text"] = "Scaled Kubernetes to 10M users with Rust."
+        self.assertIsNotNone(check_bullet(validated[0], {entry["id"]: entry}))
+
+    def test_developed_is_a_verb_not_an_unsupported_tool(self):
+        entry = DEMO_ENTRIES[1]
+        bullet = {"text": "Developed a web app for scheduling study sessions with calendar sync using TypeScript and React.", "source_id": entry["id"]}
+        self.assertIsNone(check_bullet(bullet, {entry["id"]: entry}))
+
 
 if __name__ == "__main__":
     unittest.main()

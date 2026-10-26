@@ -13,7 +13,7 @@ def resolve_gemma_model():
     return (
         os.environ.get("LELOUVRE_GEMMA_MODEL", "").strip()
         or os.environ.get("LELOUVRE_OLLAMA_MODEL", "").strip()
-        or "gemma3:4b"
+        or "gemma4:e2b"
     )
 
 
