@@ -1,145 +1,243 @@
 # Lelouvre
 
-Local internship/scholarship tracker and first read-only scouting agent. Python 3.10+; no third-party packages required.
+**Let internship preparation happen at your pace.**
 
-## Current milestone
+Lelouvre is a local internship assistant that discovers relevant roles, uses **Gemma through Ollama** to draft résumé bullets from your recorded experience, and helps you prepare applications with fewer repetitive steps.
 
-- Save manually submitted internships and scholarships in SQLite.
-- Separate application types, cycles, stages, and user-reported submission evidence.
-- Detect duplicates, including uncertain cycle matches; make repeated application saves idempotent.
-- Preserve stage/date correction history, add notes, and track dated tasks.
-- Filter/search records, switch internship/scholarship scope, and export application fields as CSV.
-- Keep edits from stale windows from silently overwriting newer progress.
+It shows the evidence behind its suggestions, checks generated claims, and hands questions needing your judgment back to you.
 
-The application tracker starts empty; prototype samples are not imported. The read-only scouting engine can populate a separate opportunities inbox from the configured sources. Email delivery and resume text extraction are not implemented. Reviewed browser submissions support Greenhouse/Lever form controls, including uploads, dropdowns and checkboxes, with conservative handoffs for unsupported controls or challenges.
+Built for the Hacktoberfest **“Slow and Steady”** theme: automate repetitive preparation, then review what matters.
 
-## Scouting agent (0.2)
+## What it does
 
-Open **Scouting agent** to run a check, inspect evidence and source health, pause individual sources, or enable six-hour scheduled checks. Scheduled checks run only while the local server is running; no Windows startup task or cloud service is installed. On this workspace the schedule was enabled after the first live checks. Settings persist in SQLite.
+- **Finds opportunities:** Reads public employer feeds and community sources, removes duplicates, and evaluates roles against explicit targeting rules.
+- **Explains fit:** Uses local Gemma to write short explanations grounded in listing details and recorded skills.
+- **Prepares materials:** Generates structured résumé bullets linked to entries in your evidence bank.
+- **Checks claims:** Rejects missing evidence references and certain unsupported numbers or tool names.
+- **Supports review:** Shows suggested changes and lets you review application answers before approval.
+- **Handles compatible forms:** Uses browser automation for uploads, text fields, dropdowns, and checkboxes on supported Greenhouse and Lever forms.
+- **Tracks outcomes:** Records confirmed submissions, preserves application materials, and explains when you need to finish an application yourself.
+- **Summarizes activity:** Displays a “While you were away” digest and recent Gemma traces.
 
-Connected adapters:
+The manual tracker also supports scholarships, notes, stages, tasks, and CSV export. Automated preparation focuses on internships.
 
-- Cloudflare and Datadog public Greenhouse job feeds. Relevant internship listings are stored by source/requisition ID, scored with transparent rules, and kept separate from submitted applications. Official career pages: https://www.cloudflare.com/careers/jobs/ and https://careers.datadoghq.com/.
-- ISACA Foundation and Center for Cyber Safety and Education scholarship program page watchers. Pages/changes are leads, not verified individual award openings. Source availability depends on public page content; script-only or blocked pages are reported as failures.
+## Why local, open-weight AI?
 
-The initial live check read 867 source entries and stored eight relevant records across three readable sources; one scholarship source required follow-up. Those are discovered records, not eight verified eligible openings. Rules deliberately retain unknown season/location/eligibility information. Out-of-scope locations and doctoral titles can be inspected using **Include excluded**. There is no claim of comprehensive coverage.
+Internship applications involve personal information and repeated writing. Lelouvre uses a local model so résumé evidence and generation prompts can stay on your machine during inference.
 
-Discovery is driven by role category (software engineering, cybersecurity/cloud security, and undergraduate research), season, and location. Resume overlap is explanatory evidence only: it never gates discovery and never changes a role's priority. Additional internship sources (0.3): **SimplifyJobs Summer 2027 GitHub list** (verified Greenhouse/Lever links), **r/internships**, and **r/csMajors** (community leads until an ATS URL is verified). LinkedIn, Indeed, and X still require future session adapters.
+Gemma runs through Ollama. You can select a different installed model, inspect the prompts and rules, and change the workflow without depending on a paid inference API.
 
-## Apply agent (0.3)
+The model handles language tasks. Code controls targeting, validation, approval, and submission decisions.
 
-Open **Apply agent** for the full pipeline: **verify ATS URL → Ollama listing analysis → deterministic policy gate → prepare packet → optional controlled execute** (HTTP or Playwright on Greenhouse/Lever). Accuracy gates block auto-execute unless Summer 2027 is confirmed, the apply URL is verified, policy approves all fields, and analysis raises no high-risk flags. Duplicate applications in your tracker are skipped.
+**Local inference does not make the entire application offline.** Discovery needs access to public sources, and submitting an application sends your approved information to the employer.
 
-## Local Gemma (0.5.2 — Hacktoberfest / open-source AI)
+## Where Gemma is used
 
-Lelouvre calls **Gemma through Ollama** directly (`lelouvre/gemma.py`), not a hosted API. Gemma is used in bounded, auditable places:
+| Feature                  | Model contribution                                 | Controls                                                |
+| ------------------------ | -------------------------------------------------- | ------------------------------------------------------- |
+| Listing analysis         | Summarizes requirements and flags uncertainty      | Deterministic targeting and submission gates            |
+| Discovery fit            | Writes a short explanation for a role              | Supplied listing and evaluation facts                   |
+| Résumé tailoring         | Produces structured bullets with evidence IDs      | Output validation and claim checks                      |
+| Today digest             | Summarizes available roles and outstanding actions | Supplied activity counts and facts                      |
+| Demo form classification | Suggests field categories                          | Authorization, essay, and CAPTCHA rules take precedence |
 
-| Step | What Gemma does | Safety |
-|------|-------------------|--------|
-| **Discover fit** | One cached sentence per new role (`scout_fit.py`) | Facts from rule-based evaluation only |
-| **Prepare** | JSON résumé bullets with `source_id` | `claim_check.py` rejects unsupported claims |
-| **Today digest** | Two-sentence “while you were away” summary | Falls back to rules if Ollama is down |
-| **Demo form** | Optional field labels (`LELOUVRE_FORM_GEMMA=1`) | Auth/essay/captcha always hand off to you |
+The interface displays the tailoring source and available model metadata. **Settings & Activity** shows recent traces, including token counts when Ollama supplies them.
 
-Traces: `GET /api/traces` (optional `?kind=gemma_tailor`). Activity shows recent calls with latency and token counts when Ollama returns them.
+Fallback output is labeled separately from Gemma output.
+
+## Application workflow
+
+1. **Complete My Profile.** Enter contact details and the full path to an existing PDF or DOCX résumé.
+2. **Find and save a role.** Review its location, season, requirements, and blockers.
+3. **Prepare the application.** Generate suggestions and inspect their evidence references.
+4. **Review answers and documents.** Complete unresolved questions, save the answers, and approve the packet.
+5. **Submit or finish manually.** Compatible applications can be submitted through the browser executor. Other applications produce a handoff explaining what needs attention.
+
+**Your selected résumé file is uploaded as-is.** Suggested bullets do not automatically rewrite that file. Incorporate any desired changes into your résumé before attaching and approving it.
+
+## Submission controls
+
+Automatic execution requires an approved packet, approved answers, an enabled employer host, and passing eligibility and accuracy checks.
+
+For a reviewed queue, enable **Auto-execute** and **Auto-when-safe** in Settings & Activity, then run **Prepare saved roles**.
+
+Each pipeline run attempts at most five applications. Newly prepared packets still require review.
+
+Changes to profile information, evidence, résumé contents, or posting details can require another review. Confirmed and uncertain submissions are protected against automatic retries.
+
+The main outcomes are:
+
+| Outcome           | Meaning                                                                     |
+| ----------------- | --------------------------------------------------------------------------- |
+| **Submitted**     | Employer confirmation was detected                                          |
+| **Ready for you** | Materials are prepared; your next action is required                        |
+| **Needs you**     | A question, unsupported control, challenge, or uncertainty stopped progress |
+
+An execution attempt is not counted as a confirmed submission.
+
+## Run locally
+
+### Requirements
+
+- Python 3.10+
+- Ollama and a downloaded model for local AI features
+- Playwright and Chromium for browser automation
+- Internet access for discovery and employer applications
+
+The basic tracker uses Python’s standard library and SQLite.
+
+### 1. Clone the repository
+
+```powershell
+git clone https://github.com/beryl-ghany/lelouvre.git
+cd lelouvre
+python -m venv .venv
+```
+
+### 2. Set up Gemma
+
+Install and open [Ollama](https://ollama.com), then run:
 
 ```powershell
 ollama pull gemma3:4b
 $env:LELOUVRE_GEMMA_MODEL = "gemma3:4b"
 $env:LELOUVRE_GEMMA_URL = "http://127.0.0.1:11434"
-python -m lelouvre.server
 ```
 
-Demo without Ollama (CI / Render): `LELOUVRE_TAILOR_OFFLINE=1` or use `Start-Lelouvre-Demo.ps1`. Compare models locally: `python scripts/compare_models.py`.
+You can substitute another compatible installed model tag. Restart Lelouvre after changing its environment variables.
 
-Listing analysis uses the same stack (`LELOUVRE_GEMMA_MODEL` or legacy `LELOUVRE_OLLAMA_MODEL`, default `gemma3:4b`). Live employer submit stays off localhost unless you set allowlisted hosts:
+### 3. Install browser support
+
+```powershell
+python -m pip --python .venv/Scripts/python.exe install -r requirements-playwright.txt
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $PWD '.venv/browsers'
+.\.venv\Scripts\python.exe -m playwright install chromium
+```
+
+### 4. Start Lelouvre
+
+```powershell
+.\.venv\Scripts\python.exe -m lelouvre.server
+```
+
+Open [Lelouvre locally](http://127.0.0.1:8765).
+
+On Windows, you can also use **Open Lelouvre.cmd**. The launcher prefers the project’s virtual environment and starts the service in the background.
+
+The computer must remain awake and the server must remain running for scheduled discovery.
+
+### 5. Enable employer execution when ready
+
+When starting the server manually, explicitly configure the supported execution hosts:
 
 ```powershell
 $env:LELOUVRE_EXECUTION_HOSTS = "boards.greenhouse.io,job-boards.greenhouse.io,jobs.lever.co"
-python -m lelouvre.server
+.\.venv\Scripts\python.exe -m lelouvre.server
 ```
 
-Optional browser submit: `pip install -r requirements-playwright.txt` then `playwright install chromium`, enable **Browser submit** on the Apply agent page.
+Host configuration alone does not approve packets or bypass submission gates.
 
-Failed fetches retain previous results. A complete successful feed may mark an absent listing **No longer in feed**, which is not a confirmed application rejection. First seen is discovery time, not publication time. A changed page is not an opening announcement. Network calls are HTTPS, destination-allowlisted, bounded in size/time, and read-only. Schema version 2 adds scouting records without deleting the original tracker.
+## Demo mode
 
-One-off check (use one local service/runner per database):
+Demo mode uses a fictional profile and evidence bank. It can run with real local Gemma inference or with deterministic fallback output.
+
+To run a separate demo server:
 
 ```powershell
-python -m lelouvre.scout
+$env:LELOUVRE_DEMO = "1"
+$env:LELOUVRE_DATABASE = Join-Path $PWD 'data\lelouvre-demo.sqlite3'
+$env:LELOUVRE_GEMMA_MODEL = "gemma3:4b"
+Remove-Item Env:LELOUVRE_TAILOR_OFFLINE -ErrorAction SilentlyContinue
+
+.\.venv\Scripts\python.exe -m lelouvre.server --port 8766
 ```
 
-API reference used: https://docs.greenhouse.io/job-board. Public listing access does not grant application-submission API access.
+Open [the local demo](http://127.0.0.1:8766).
 
-## Run
+Use a separate PowerShell window for demo mode so its environment settings stay separate from your real workspace.
 
-On Windows, double-click **Open Lelouvre.cmd** in this folder. It starts the local service in a hidden background process if needed and opens your default browser. It can be used outside ChatGPT/Codex. Closing the browser does not stop the service; shutting down or restarting Windows does. This launcher does not install automatic Windows startup. Run it again after restarting your computer. Logs go to `data/server.out.log` and `data/server.err.log`.
-
-The launcher uses the existing bundled Python when available, otherwise `python` from PATH. Lelouvre itself does not require an active ChatGPT session. It remains a local app: another computer or phone cannot use this loopback URL, and six-hour monitoring requires the computer to be awake with the service running.
-
-From this project folder:
+For a demo without model inference, set this before starting:
 
 ```powershell
-python -m lelouvre.server
+$env:LELOUVRE_TAILOR_OFFLINE = "1"
 ```
 
-Open http://127.0.0.1:8765 in a browser. The service binds only to the local loopback address. Keep the process running while using the dashboard; Ctrl+C stops it. Saved records remain on disk. Restarting changes the request token, so reload an older browser tab before saving.
+The demo form stops at an authorization question and does not submit to an employer.
 
-If Python is not on PATH, the bundled runtime available in this environment is:
+### Suggested walkthrough
+
+1. Show the fictional evidence bank.
+2. Discover a role and inspect its fit explanation.
+3. Prepare materials and show Gemma-generated bullets with evidence IDs.
+4. Open Settings & Activity to inspect the corresponding trace.
+5. Run the demo form and show its handoff.
+
+A Gemma ping demonstrates connectivity. A successful tailoring trace demonstrates the model performing useful work.
+
+## Discovery sources
+
+Configured sources include:
+
+- Cloudflare
+- Datadog
+- Stripe
+- MongoDB
+- Robinhood
+- Duolingo
+- Simplify’s Summer 2027 internship list
+- Selected Reddit communities
+- Scholarship program page watchers
+
+Sources can become unavailable, block requests, or change their format. Lelouvre reports source health and retains previous results when a fetch fails.
+
+A community entry is a lead. A recognized ATS URL is not proof of eligibility or a complete application.
+
+## Project structure
+
+```text
+lelouvre/
+  gemma.py              Local Ollama client
+  scout.py              Discovery and targeting
+  scout_fit.py          Gemma fit explanations
+  evidence_bank.py      Recorded experience and screening rules
+  preparation.py        Packet preparation and validation
+  claim_check.py        Deterministic bullet checks
+  application_agent.py  Approval, execution, receipts, archive
+  browser_executor.py   Supported browser form handling
+  orchestrator.py       Reviewed application queue
+  overnight.py          Today digest
+  traces.py             Local trace storage
+  server.py             HTTP service
+
+web/                    Browser interface
+fixtures/               Demo forms
+tests/                  Automated tests
+scripts/                Model-comparison utilities
+```
+
+## Validation
+
+Run the test suite:
 
 ```powershell
-& '.venv\Scripts\python.exe' -m lelouvre.server
+$env:LELOUVRE_TAILOR_OFFLINE = "1"
+.\.venv\Scripts\python.exe -m unittest discover -s tests -q
 ```
 
-Alternate port/database:
+Tests cover tracking, discovery, preparation, approvals, reviewed answers, duplicate prevention, and receipts. Browser tests use disposable local forms rather than employer submissions.
 
-```powershell
-python -m lelouvre.server --port 8766 --database .tmp/test.sqlite3
-```
+Mocked model tests and offline tests do not establish that a live Gemma call succeeded. Verify local inference separately when recording a demo.
 
-## Data and backup
+## Data and privacy
 
-The default database is `data/lelouvre.sqlite3` within the project, excluded from version control. This is a local single-user development service, not an internet-hosted deployment. Database files are not encrypted by this app. OS and folder access control protect this milestone; browser-origin checks and a per-process request token protect write requests from unrelated web pages. Any local process with filesystem access can read the database. The project folder may follow its existing device sync settings.
+The default database is `data/lelouvre.sqlite3`. Demo mode defaults to a separate database. Runtime databases and the virtual environment are excluded from version control.
 
-For a full backup, stop the service and copy the SQLite file to a protected location. Test restoration on a copy. CSV exports cover application fields only; they do not include full notes, events, or tasks. A backup/restore interface, encrypted storage, and production authentication are future work.
+Lelouvre binds to the local loopback address by default. Files and database records are not encrypted by the app; protect them through your computer’s access controls.
 
-Draft manual-entry forms are retained in this browser tab's session storage until saved or cleared. The canonical records and history are in SQLite. Screenshot/email extraction is unavailable; links are references and are not fetched. History records when edits were entered, while a submitted date records the date reported by the user. All displayed event timestamps use America/New_York.
+Submitted archives can contain résumé attachments and application answers. Do not publish your real database, traces containing personal information, or private application materials.
 
-## Validate
+For a simple backup, stop the service and copy the database to a protected location.
 
-```powershell
-python -m unittest discover -s tests -v
-```
+## License
 
-Tests use temporary databases and cover persistence, concurrent duplicates, idempotency, scholarship cycles, state validation, stale edits, notes/tasks, CSV formula escaping, origin/token checks, HTTP behavior, targeting rules, scouting deduplication, snapshots, disappearance/relisting, and source failure retention. Scouting unit tests use fixtures, not external network calls.
-
-For browser verification, start a separate server on port 8766 with a disposable test database as above. Run `tests/browser-check.cjs` using Node and an available Playwright installation (`PLAYWRIGHT_MODULE` may specify its module directory). It creates QA records only on port 8766 and checks saves, reloads, history, tasks, duplicates, filters, narrow layouts, and conflicting edits. Never run that server with the real application database. The initial milestone passed all 12 Python tests and the browser walkthrough.
-
-Version 0.2 passed 26 Python tests. `tests/scout-browser.cjs` performs a read-only browser walkthrough against port 8765: coverage/run history, scope filtering, scholarship evidence/review labels, and narrow layout. It does not trigger a new scan or change application records.
-
-## Architecture
-
-See SYSTEM_DESIGN.md, ARCHITECTURE.md, SCREEN_SPEC.md, and SCHOLARSHIPS.md. The current schema is the tracker and initial scouting subset of that target architecture. `prototype/lelouvre-ui.js` is the earlier sample-only interface and is not loaded by the working app.
-
-## Submission workflow repairs (0.5.1)
-
-1. Open **My Profile**, enter contact details and the full path to an existing PDF/DOCX resume, then save. The attachment is sent as-is; tailored bullets are suggestions and do not rewrite that file.
-2. Save a role in **Discover**, then **Get this application ready**. Read and complete **Application answers**, save reviewed answers, then **Approve changes**. Verification failures cannot be bypassed by approval.
-3. **Submit for me** requests one submission explicitly. Real employer submissions use the browser executor. Unanswered required questions, changed forms, CAPTCHA, unsupported controls and incomplete uploads stop execution.
-4. For a reviewed queue, enable **Auto-execute** and **Auto-when-safe**, then run **Prepare saved roles**. Existing packets are reused while profile/evidence/posting content remains unchanged. Each run attempts at most five applications. New packets still require review.
-5. Counts record confirmed employer receipts, not merely execution calls. Interrupted or uncertain submissions are locked against automatic retry; inspect the employer before taking further action.
-
-The launcher prefers `.venv/Scripts/python.exe`. Browser setup in PowerShell:
-
-```powershell
-python -m venv .venv
-python -m pip --python .venv/Scripts/python.exe install -r requirements-playwright.txt
-$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $PWD '.venv/browsers'
-.venv/Scripts/python.exe -m playwright install chromium
-```
-
-Run `Open Lelouvre.cmd` to load version 0.5.2. The launcher replaces an older Lelouvre server, but refuses to stop another app using the same port. Discovery includes direct Stripe, MongoDB, Robinhood and Duolingo feeds in addition to the existing sources. Community feeds may still be blocked by their providers; source health reports those failures.
-
-**Public demo deploy:** `render.yaml` runs demo mode with `LELOUVRE_HOSTED=1` and generated `LELOUVRE_ACCESS_TOKEN` (read-only hosted UI; no Ollama on Render). License: Apache-2.0 (`LICENSE`).
-
-Run the regression suite with `.venv/Scripts/python.exe -m unittest discover -s tests -q`. Browser tests use local disposable forms, never employer submissions.
+Apache License 2.0. See [LICENSE](LICENSE).
